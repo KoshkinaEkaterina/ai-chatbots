@@ -1,15 +1,16 @@
 from typing import TypedDict, List, Dict, Sequence
 from pathlib import Path
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, BaseMessage
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_pinecone import PineconeVectorStore
-from langchain.chains import ConversationalRetrievalChain
-from langchain.memory import ConversationBufferMemory
+from langchain_openai import ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores.pinecone import Pinecone as PineconeStore
+from langchain_core.retrievers import BaseRetriever
+from langchain_core.prompts import PromptTemplate
+from langchain.memory import ConversationBufferMemory  # From base langchain
+from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain  # Full path
 from pinecone import Pinecone
 from dotenv import load_dotenv
 import os
-from langchain.prompts import PromptTemplate
-
 from langgraph.graph import StateGraph
 
 # Initialize environment and Pinecone
@@ -22,7 +23,7 @@ pc = Pinecone(
 )
 
 # Initialize vectorstore
-vectorstore = PineconeVectorStore.from_existing_index(
+vectorstore = PineconeStore.from_existing_index(
     index_name=os.getenv("PINECONE_INDEX"),
     embedding=OpenAIEmbeddings()
 )
@@ -73,7 +74,7 @@ class ChatState(TypedDict):
 
 # Create chat chain with enhanced context handling
 chain = ConversationalRetrievalChain.from_llm(
-    llm=ChatOpenAI(model="gpt-4"),
+    llm=ChatOpenAI(model="gpt-4", temperature=0.7),
     retriever=vectorstore.as_retriever(
         search_type="similarity",
         search_kwargs={"k": 20}
@@ -81,7 +82,8 @@ chain = ConversationalRetrievalChain.from_llm(
     memory=ConversationBufferMemory(
         memory_key="chat_history",
         return_messages=True,
-        output_key="answer"
+        output_key="answer",
+        input_key="question"
     ),
     return_source_documents=True,
     verbose=True,

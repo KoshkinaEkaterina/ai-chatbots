@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings
-from langchain_pinecone import PineconeVectorStore
+from langchain_community.vectorstores.pinecone import Pinecone as PineconeStore
 from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pinecone import Pinecone, ServerlessSpec
@@ -123,7 +123,7 @@ def process_pdfs(reset=False):
             reset_index(pc, index_name)
         
         # Create vectorstore
-        vectorstore = PineconeVectorStore.from_documents(
+        vectorstore = PineconeStore.from_documents(
             documents=splits,
             embedding=embeddings,
             index_name=index_name
@@ -141,7 +141,7 @@ def process_pdfs(reset=False):
         )
         for doc in results:
             print(f"\nSource: {doc.metadata.get('essay_title', 'Unknown')}")
-            print(f"Preview: {doc.metadata.get('preview', 'No preview')}...")
+            print(f"Preview: {doc.page_content[:200]}...")
         
         return vectorstore
         

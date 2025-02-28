@@ -1,20 +1,24 @@
 # Core dependencies
-langchain
-langchain-core
-langchain-community
-langchain-openai
+langchain>=0.1.0
+langchain-core>=0.1.0
+langchain-community>=0.0.10
+langchain-openai>=0.0.3
+langchain-pinecone>=0.2.0
+openai>=1.0.0
+pinecone-client>=3.0.0
+pinecone-text
+python-dotenv
 langgraph
+typing-extensions
+pydantic
 
+# Remove duplicates
 # Vector store
-pinecone-client
-langchain-pinecone
+# pinecone-client  # Already included above
+# langchain-pinecone  # Already included above
 
 # PDF processing
 pypdf
 
-# Azure and HTTP
-requests
-python-dotenv
-
 # Optional but recommended
-colorama  # For better terminal output on Windows
+colorama
