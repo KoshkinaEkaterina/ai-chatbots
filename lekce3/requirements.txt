@@ -1,0 +1,20 @@
+# Core dependencies
+langchain
+langchain-core
+langchain-community
+langchain-openai
+langgraph
+
+# Vector store
+pinecone-client
+langchain-pinecone
+
+# PDF processing
+pypdf
+
+# Azure and HTTP
+requests
+python-dotenv
+
+# Optional but recommended
+colorama  # For better terminal output on Windows
