@@ -1,0 +1,8 @@
+{
+  "name": "paul-graham-essays-chat",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "langchain": "latest"
+  }
+} 
