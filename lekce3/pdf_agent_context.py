@@ -14,17 +14,25 @@ import os
 from langgraph.graph import StateGraph
 
 # Initialize environment and Pinecone
-env_path = Path(__file__).parent.parent / '.env'
+env_path = Path(__file__).parent / '.env'  # Changed to look in lekce3 directory first
 load_dotenv(env_path)
 
+# Verify environment variables are loaded
+api_key = os.getenv("PINECONE_API_KEY")
+env = os.getenv("PINECONE_ENV")
+index_name = os.getenv("PINECONE_INDEX")
+
+if not all([api_key, env, index_name]):
+    raise ValueError("Missing required environment variables. Check your .env file.")
+
 pc = Pinecone(
-    api_key=os.getenv("PINECONE_API_KEY"),
-    environment=os.getenv("PINECONE_ENV")
+    api_key=api_key,
+    environment=env
 )
 
 # Initialize vectorstore
 vectorstore = PineconeStore.from_existing_index(
-    index_name=os.getenv("PINECONE_INDEX"),
+    index_name=index_name,
     embedding=OpenAIEmbeddings()
 )
 

@@ -1,0 +1,4 @@
+profile_type,income,savings,risk_tolerance,investment_horizon,expense_housing,expense_utilities,expense_food,expense_transport,expense_insurance,expense_entertainment,debt_student_loan_balance,debt_student_loan_rate,debt_car_loan_balance,debt_car_loan_rate,debt_mortgage_balance,debt_mortgage_rate,debt_credit_card_balance,debt_credit_card_rate
+conservative,75000,15000,low,long,2000,300,600,400,300,400,20000.0,0.045,15000.0,0.039,0,0,0,0
+moderate,95000,25000,medium,medium,2500,350,800,500,400,600,0,0,0,0,300000.0,0.035,5000.0,0.159
+aggressive,120000,40000,high,short,3000,400,1000,600,500,800,0,0,25000.0,0.042,400000.0,0.033,0,0

@@ -13,13 +13,14 @@ def find_env_file():
     """Find the .env file in the ai-chatbots root"""
     current_dir = Path(__file__).parent
     possible_locations = [
-        current_dir.parent / '.env',      # ai-chatbots directory
-        current_dir / '.env',             # current directory (lekce3)
-        Path.cwd() / '.env'              # current working directory
+        current_dir / '.env',             # current directory (lekce3) first
+        current_dir.parent / '.env',      # ai-chatbots directory second
+        Path.cwd() / '.env'              # current working directory last
     ]
     
     for env_path in possible_locations:
         if env_path.exists():
+            print(f"Found .env file at: {env_path}")
             return env_path
             
     raise FileNotFoundError("No .env file found")

@@ -1,0 +1,26 @@
+type,id,content,factor
+topic,T1,Můžete nám popsat nějakou nedávnou situaci kdy došlo k problémovému chování ve vaší třídě?,
+factor,T1,incident_context,When where and under what circumstances the behaviour occurred
+factor,T1,behaviour_description,A clear explanation of what happened and how the inappropriate behaviour was expressed
+factor,T1,triggers_causes,Insight into what led to the behaviour (e.g. peer dynamics emotions external influences)
+factor,T1,teacher_response,A description of the actions taken to address the situation
+factor,T1,classroom_impact,The effect of the incident on other students lesson flow and classroom atmosphere
+factor,T1,resolution_outcome,Whether and how the situation was resolved or if it escalated
+factor,T1,lessons_future,Reflections on whether the teacher adjusted their approach based on the experience
+topic,T2,Zažili jste někdy že se k vám žáci chovali neuctivě?,
+factor,T2,types_disrespect,Specific examples of disrespectful behaviour with a detailed story of when it occurred
+factor,T2,patterns_contexts,A description of when and where such behaviour typically happens
+factor,T2,teacher_reaction,Explanation of how the teacher responded and why they chose that approach
+factor,T2,emotional_impact,How these experiences affected the teacher emotionally and professionally
+factor,T2,escalation,Whether the teacher escalated the conflict to parents school leadership and what the reaction was
+factor,T2,long_term_effects,Whether repeated disrespect has influenced their teaching style confidence or job satisfaction
+factor,T2,prevention,Steps taken by the teacher to prevent similar incidents in the future
+topic,T3,Jak byste popsali vztahy mezi žáky ve vaší třídě?,
+factor,T3,social_dynamics,A specific story illustrating the classroom dynamic including how students generally interact
+factor,T3,positive_relationships,A real-life example of teamwork or friendships strengthening the class atmosphere
+factor,T3,conflicts_tensions,A detailed account of a conflict including what happened how it unfolded and its resolution
+factor,T3,impact_learning,A clear situation where peer relationships had a direct effect on academic engagement or performance
+factor,T3,bullying_exclusion,A case study of bullying or exclusion including how it was handled and what the outcome was
+factor,T3,external_factors,A real-life example of an external factor shaping student relationships
+factor,T3,intervention_strategies,A specific case where the teacher's intervention successfully improved student relationships
+ 
