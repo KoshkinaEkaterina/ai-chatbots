@@ -1,0 +1,12 @@
+azure-functions
+langgraph>=0.0.18
+langchain-core>=0.1.0
+langchain-community>=0.0.10
+langchain-openai>=0.0.3
+openai>=1.0.0
+python-dotenv
+typing-extensions
+pydantic
+numpy
+pandas
+tavily-python>=0.1.9 
