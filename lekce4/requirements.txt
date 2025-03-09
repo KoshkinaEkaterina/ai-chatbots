@@ -1,0 +1,11 @@
+langchain-core>=0.1.0
+langchain-community>=0.0.10
+langchain-openai>=0.0.3
+openai>=1.0.0
+python-dotenv
+langgraph
+typing-extensions
+pydantic
+numpy
+pandas
+
