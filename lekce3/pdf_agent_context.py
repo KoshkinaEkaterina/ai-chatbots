@@ -46,23 +46,28 @@ except Exception as e:
 
 # Enhanced prompt template for better context handling
 CONTEXT_PROMPT = PromptTemplate(
-    template="""You are an expert on Paul Graham's essays. Use the following pieces of context to answer the question.
-If you don't find the answer in the essays provided, say so clearly.
+    template="""You are an expert in the investment potential of luxury handbags, including their market trends, resale
+    value, brand influence, and economic factors affecting their appreciation over time.
+
+Use the following pieces of context to answer the question. If the answer is not available in the provided research,
+clearly state that.
 
 Previous conversation context:
 {chat_history}
 
-Relevant passages from Paul Graham's essays:
+Relevant passages from studies on luxury handbag investments:
 {context}
 
 Given this context and the conversation history, please answer:
 {question}
 
 Guidelines:
-1. If the question refers to something mentioned in the previous conversation, address that connection explicitly
-2. Quote relevant passages from the essays when appropriate
-3. If expanding on a previously mentioned topic, explain how this new information relates
-4. Maintain the context of the ongoing conversation
+1. If the question relates to a topic previously discussed, reference that connection explicitly.
+2. When possible, provide data or examples of specific luxury brands (e.g., Hermès, Chanel, Louis Vuitton) and their
+historical investment performance.
+3. Explain factors influencing the resale value of luxury bags, such as limited editions, material quality, or
+celebrity endorsements.
+4. Maintain a professional but engaging tone, suitable for an audience interested in luxury investments.
 """,
     input_variables=["context", "chat_history", "question"]
 )
@@ -94,10 +99,10 @@ chain = ConversationalRetrievalChain.from_llm(
 
 def agent(state: ChatState) -> ChatState:
     """Process the latest message and generate a response with context awareness"""
-    
+
     # Get chat history and last message
     messages = state["messages"]
-    
+
     # Format chat history for context
     chat_history = []
     for i in range(0, len(messages)-1, 2):
@@ -106,22 +111,22 @@ def agent(state: ChatState) -> ChatState:
                 "human": messages[i].content,
                 "ai": messages[i+1].content
             })
-    
+
     current_message = messages[-1].content
-    
+
     # Generate response with context
     response = chain.invoke({
         "question": current_message,
         "chat_history": chat_history
     })
-    
+
     # Log retrieved documents for context
     if response.get("source_documents"):
         print("\nRelevant passages found:")
         for doc in response["source_documents"]:
             print(f"\nFrom essay: {doc.metadata.get('essay_title', 'Unknown')}")
             print(f"Context: {doc.page_content[:200]}...")
-    
+
     # Update state with new message and context
     return {
         "messages": list(messages) + [AIMessage(content=response["answer"])],
@@ -138,23 +143,27 @@ def create_graph():
     workflow.set_entry_point("agent")
     return workflow.compile()
 
+
 def get_initial_state():
     """Create initial state with welcome message and empty context"""
-    welcome_message = """Welcome! I'm an AI assistant specialized in Paul Graham's essays. 
-I maintain context throughout our conversation, so you can ask follow-up questions or request more details about previously discussed topics.
+    welcome_message = """Welcome! I'm an AI assistant specialized in luxury handbag investments.
+I maintain context throughout our conversation, so you can ask follow-up questions or request more details about
+previously discussed topics.
 
-I can help you explore his thoughts on:
-- Startups and entrepreneurship
-- Technology and programming
-- Business and wealth creation
-- Society and life philosophy
+I can help you explore:
+- The investment potential of luxury bags
+- Resale value trends of brands like Hermès, Chanel, and Louis Vuitton
+- Factors that influence appreciation, such as rarity, craftsmanship, and market demand
+- Tips on selecting handbags with the best long-term value
 
-What would you like to know about Paul Graham's ideas?"""
-    
+What would you like to know about investing in luxury handbags?"""
+
     return {
         "messages": [
-            SystemMessage(content="""You are an expert on Paul Graham's essays. Always draw from his writings,
-maintain conversation context, and provide relevant quotes. If a topic isn't covered in his essays, say so."""),
+            SystemMessage(content="""You are an expert on investing in luxury handbags. Always reference market trends,
+             brand history, and financial insights.
+Maintain conversation context and provide relevant data or examples. If a topic isn't covered in available research,
+ say so."""),
             AIMessage(content=welcome_message)
         ],
         "context": {
@@ -178,12 +187,12 @@ if __name__ == "__main__":
         if user_input.lower() in ['quit', 'exit', 'bye']:
             print("\nAI: Goodbye! Thanks for chatting about Paul Graham's essays.")
             break
-        
+
         # Add user message to state
         state["messages"].append(HumanMessage(content=user_input))
-        
+
         # Get response with context
         state = graph.invoke(state)
-        
+
         # Print response
         print("\nAI:", state["messages"][-1].content) 
