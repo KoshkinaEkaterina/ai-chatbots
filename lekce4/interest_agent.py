@@ -16,7 +16,7 @@ load_dotenv()
 
 def calculate_monthly_payment(principal: float, annual_rate: float, years: int) -> float:
     """Calculate monthly payment for a loan.
-    
+
     Args:
         principal: Loan amount
         annual_rate: Annual interest rate (as decimal, e.g., 0.05 for 5%)
@@ -24,10 +24,10 @@ def calculate_monthly_payment(principal: float, annual_rate: float, years: int) 
     """
     monthly_rate = annual_rate / 12
     num_payments = years * 12
-    
+
     if monthly_rate == 0:
         return principal / num_payments
-        
+
     monthly_payment = principal * (monthly_rate * (1 + monthly_rate)**num_payments) / ((1 + monthly_rate)**num_payments - 1)
     return monthly_payment
 
@@ -119,20 +119,20 @@ if __name__ == "__main__":
     print("- Calculate loan for $200,000 at 5% for 30 years")
     print("- Explain amortization")
     print("- What's the difference between APR and APY?\n")
-    
+
     state = get_initial_state()
-    
+
     while True:
         try:
             user_input = input("\nYou: ").strip()
             if user_input.lower() == 'quit':
                 print("\nGoodbye!")
                 break
-                
+
             state["messages"].append(HumanMessage(content=user_input))
             state = graph.invoke(state)
             print(f"\nAssistant: {state['messages'][-1].content}")
-            
+
         except Exception as e:
             logger.error(f"Error: {str(e)}")
             print("\nSorry, I encountered an error. Please try again.")
