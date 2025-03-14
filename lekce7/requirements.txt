@@ -1,0 +1,41 @@
+azure-functions
+langgraph>=0.0.18
+typing-extensions
+pydantic
+numpy
+pandas
+tavily-python>=0.1.9
+parsedatetime>=2.6
+python-dateutil>=2.8.2
+pytz>=2024.1
+twilio>=8.12.0
+fastapi>=0.109.0
+uvicorn>=0.27.0
+python-multipart>=0.0.7 
+# Core dependencies
+langchain>=0.1.0
+langchain-core>=0.1.0
+langchain-community>=0.0.10
+langchain-openai>=0.0.3
+openai>=1.0.0
+python-dotenv
+
+# Vector store
+pinecone>=3.0.0
+
+# Data processing
+pandas>=2.0.0
+pyarrow>=14.0.1  # For parquet support
+fastparquet>=2023.10.1  # Alternative parquet engine
+numpy>=1.24.0
+tqdm>=4.65.0
+huggingface_hub>=0.20.3  # For accessing HF datasets
+fsspec==2023.9.2  # Specific version that works with cache_mapper
+datasets>=2.17.1  # HuggingFace datasets library
+
+# Optional but recommended
+colorama  # For colored terminal output
+
+# Console formatting
+rich>=10.0.0
+
