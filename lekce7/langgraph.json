@@ -1,0 +1,13 @@
+{
+  "dockerfile_lines": [],
+  "graphs": {
+    "financial_agent": "./financial_agent.py:graph",
+    "interview_agent": "./interview_simple.py:graph",
+    "simple_agent": "./agent.py:graph"
+  },
+  "env": "./.env",
+  "python_version": "3.11",
+  "dependencies": [
+    "."
+  ]
+}
