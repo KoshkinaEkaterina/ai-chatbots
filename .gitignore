@@ -2,3 +2,5 @@
 venv
 .idea/
 lekce5/local.settings.json
+output.pdf
+graph.png

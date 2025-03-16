@@ -9,6 +9,7 @@ from pinecone import Pinecone, ServerlessSpec
 import time
 import argparse
 
+
 def find_env_file():
     """Find the .env file in the ai-chatbots root"""
     current_dir = Path(__file__).parent
@@ -24,6 +25,7 @@ def find_env_file():
             return env_path
 
     raise FileNotFoundError("No .env file found")
+
 
 def reset_index(pc, index_name):
     """Delete and recreate the index"""
@@ -61,6 +63,7 @@ def reset_index(pc, index_name):
     except Exception as e:
         print(f"Error during index reset: {e}")
         raise
+
 
 def process_pdfs(reset=False):
     try:
@@ -150,6 +153,7 @@ def process_pdfs(reset=False):
         print(f"\nError during processing: {str(e)}")
         raise
 
+
 def main():
     print("\n" + "="*80)
     print("PDF PROCESSING SCRIPT")
@@ -164,9 +168,14 @@ def main():
         # First try to load the environment
         env_path = find_env_file()
         load_dotenv(env_path)
+        print("\n✅ Kontrola environment proměnných:")
+        print("OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY"))
+        print("PINECONE_API_KEY:", os.getenv("PINECONE_API_KEY"))
+        print("PINECONE_ENV:", os.getenv("PINECONE_ENV"))
+        print("PINECONE_INDEX:", os.getenv("PINECONE_INDEX"))
 
         # Verify environment variables
-        required_vars = ["PINECONE_API_KEY", "PINECONE_ENV", "PINECONE_INDEX"]
+        required_vars = ["OPENAI_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV", "PINECONE_INDEX"]
         missing_vars = [var for var in required_vars if not os.getenv(var)]
 
         if missing_vars:
@@ -184,5 +193,6 @@ def main():
     finally:
         print("\nScript execution completed")
 
+
 if __name__ == "__main__":
-    main() 
+    main()
