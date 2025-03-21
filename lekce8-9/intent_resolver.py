@@ -438,9 +438,12 @@ Include specific examples from the available products when relevant."""
 
     async def handle_comparison(self, state: Dict, search_products_func) -> Dict:
         """Compare products based on user criteria"""
+        self.logger.info("=== Starting COMPARISON handler ===")
         try:
             current_product = state["current_product"]
             search_context = state["search_context"]
+            
+            self.logger.debug(f"Comparing product: {current_product['name']}")
             
             # Find similar products using the passed search function
             similar_products = await search_products_func(search_context)
@@ -460,7 +463,9 @@ Provide:
 
 Make it objective and detailed."""
 
-            response = await self.llm.ainvoke([HumanMessage(content=prompt)])
+            response = self.llm.invoke([HumanMessage(content=prompt)])
+            self.logger.debug("Generated comparison response")
+            
             state["messages"].append({
                 "role": "assistant",
                 "content": response.content
@@ -480,6 +485,8 @@ Make it objective and detailed."""
             product = state["current_product"]
             query = state["last_query"]
             
+            self.logger.debug(f"Support query for product: {product['name']}")
+            
             prompt = f"""Address this support question for the product:
 
 Product: {json.dumps(product, indent=2)}
@@ -494,12 +501,13 @@ Provide:
 
 Make it practical and easy to follow."""
 
-            response = await self.llm.ainvoke([HumanMessage(content=prompt)])
+            response = self.llm.invoke([HumanMessage(content=prompt)])
+            self.logger.debug("Generated support response")
+            
             state["messages"].append({
                 "role": "assistant",
                 "content": response.content
             })
-            self.logger.debug("Generated support response")
             return state
 
         except Exception as e:
@@ -513,6 +521,8 @@ Make it practical and easy to follow."""
         try:
             current_product = state["current_product"]
             search_context = state["search_context"]
+            
+            self.logger.debug(f"Finding replacements for: {current_product['name']}")
             
             prompt = f"""Help user replace their current product:
 
@@ -539,15 +549,13 @@ Focus on making the transition smooth."""
             else:
                 product_info = "\n\nNo direct replacements found."
 
-            response = await self.llm.ainvoke([
-                HumanMessage(content=prompt + product_info)
-            ])
+            response = self.llm.invoke([HumanMessage(content=prompt + product_info)])
             
+            self.logger.debug("Generated replacement recommendations")
             state["messages"].append({
                 "role": "assistant",
                 "content": response.content
             })
-            self.logger.debug("Generated replacement recommendations")
             return state
 
         except Exception as e:
@@ -582,7 +590,7 @@ Cover:
 
 Be specific about terms and conditions."""
 
-            response = await self.llm.invoke([HumanMessage(content=prompt)])
+            response = self.llm.invoke([HumanMessage(content=prompt)])
             self.logger.debug("Generated warranty response")
             
             state["messages"].append({
