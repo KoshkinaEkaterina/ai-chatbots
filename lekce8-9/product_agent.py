@@ -115,43 +115,55 @@ class ProductAgent:
             if "messages" not in state:
                 state["messages"] = []
             state["messages"].append({"role": "user", "content": message})
+            state["last_query"] = message
             
-            # Analyze query and update criteria
-            criteria = await self.product_recommender.analyze_query(state)
-            state["current_criteria"] = criteria
+            # 1. Classify intent first
+            intent = await self.intent_classifier.classify_intent(message)
+            state["current_intent"] = intent
+            self.logger.info(f"Classified intent: {intent}")
             
-            # Search and score products - THIS IS THE IMPORTANT PART
-            state = self.product_recommender.search_and_score_products(state)
-            products = state.get("scored_products", [])
+            # 2. Handle different intents using the resolver
+            if intent == UserIntent.COMPARISON:
+                if not state.get("scored_products"):
+                    state["messages"].append({
+                        "role": "assistant",
+                        "content": "I don't have any products to compare yet. What kind of products are you interested in?"
+                    })
+                    return state
+                return await self.intent_resolver.handle_comparison(state, self.product_recommender.search_and_score_products)
             
-            self.logger.info(f"Found {len(products)} products")
+            elif intent == UserIntent.REQUIREMENTS:
+                return await self.intent_resolver.handle_requirements(state)
             
-            if not products:
+            elif intent == UserIntent.FIRST_USE:
+                return await self.intent_resolver.handle_first_use(state)
+            
+            elif intent == UserIntent.PURCHASE_REPLACEMENT:
+                criteria = await self.product_recommender.analyze_query(state)
+                state["current_criteria"] = criteria
+                state = self.product_recommender.search_and_score_products(state)
+                return await self.intent_resolver.handle_replacement(state, self.product_recommender.search_and_score_products)
+            
+            elif intent == UserIntent.PURCHASE_UPGRADE:
+                criteria = await self.product_recommender.analyze_query(state)
+                state["current_criteria"] = criteria
+                state = self.product_recommender.search_and_score_products(state)
+                return await self.intent_resolver.handle_upgrade(state, self.product_recommender.search_and_score_products)
+            
+            elif intent == UserIntent.PURCHASE_NEW:
+                # Standard product search flow
+                criteria = await self.product_recommender.analyze_query(state)
+                state["current_criteria"] = criteria
+                state = self.product_recommender.search_and_score_products(state)
+                return await self.intent_resolver.handle_purchase(state, self.product_recommender.search_and_score_products)
+            
+            else:
+                self.logger.warning(f"Unhandled intent: {intent}")
                 state["messages"].append({
                     "role": "assistant",
-                    "content": "I couldn't find any products matching your criteria. Could you try being more general?"
+                    "content": "I'm not sure what you're looking for. Could you try rephrasing your request?"
                 })
                 return state
-            
-            # Generate response with found products
-            markdown_response = "# Product Recommendations\n\n"
-            markdown_response += f"I found {len(products)} products matching your criteria:\n\n"
-            
-            for product in products[:5]:
-                markdown_response += f"## {product['name']}\n"
-                markdown_response += f"- Price: ${product['price']:.2f}\n"
-                if product.get('category'):
-                    markdown_response += f"- Category: {' > '.join(product['category'])}\n"
-                if product.get('description'):
-                    markdown_response += f"- Description: {product['description']}\n"
-                markdown_response += "\n"
-            
-            state["messages"].append({
-                "role": "assistant",
-                "content": markdown_response
-            })
-            
-            return state
             
         except Exception as e:
             self.logger.exception("Error processing message")
