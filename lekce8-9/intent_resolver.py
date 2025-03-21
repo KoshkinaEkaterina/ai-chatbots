@@ -18,31 +18,38 @@ class IntentResolver:
     
     async def handle_comparison(self, state: Dict, search_func: Optional[Callable] = None) -> Dict:
         """Handle comparison intent - analyze and compare products with detailed feature breakdown"""
-        self.logger.info("Starting comparison handler")
+        self.logger.info("=== Starting COMPARISON handler ===")
+        self.logger.debug(f"Initial state: {state}")
         products = state.get("scored_products", [])
         
+        self.logger.debug(f"Found {len(products)} products to compare")
+        
         if not products:
+            self.logger.warning("No products found for comparison")
             state["messages"].append({
                 "role": "assistant",
                 "content": "I don't have any products to compare yet. Could you tell me what kind of products you're interested in?"
             })
-            self.logger.debug(f"State after comparison: {state}")
             return state
 
         try:
             # Extract key features from all products for comparison
             all_features = set()
             for product in products:
+                self.logger.debug(f"Extracting features from product: {product['name']}")
                 # Get all possible feature keys from product data
                 all_features.update(product.get("features", {}).keys())
                 if "dimensions" in product:
                     all_features.update(product["dimensions"].keys())
                 all_features.update(["price", "weight", "material", "brand"])
 
+            self.logger.debug(f"Extracted features: {all_features}")
+
             # Select top 3 most diverse products based on feature differences
             scored_differences = []
             for i, prod1 in enumerate(products):
                 for j, prod2 in enumerate(products[i+1:], i+1):
+                    self.logger.debug(f"Comparing {prod1['name']} with {prod2['name']}")
                     diff_score = 0
                     # Compare features between products
                     for feature in all_features:
@@ -141,14 +148,17 @@ Format as markdown with clear sections. Use tables for feature comparisons where
 
     async def handle_requirements(self, state: Dict) -> Dict:
         """Handle requirements gathering and product compatibility questions"""
-        self.logger.info("Starting requirements handler")
+        self.logger.info("=== Starting REQUIREMENTS handler ===")
+        self.logger.debug(f"Initial state: {state}")
         criteria = state.get("current_criteria", {})
+        self.logger.debug(f"Current criteria: {criteria}")
         category = criteria.get("category")
         last_query = state.get("last_query", "")
         current_product = state.get("current_product")
         
         try:
             if current_product:
+                self.logger.debug(f"Handling requirements for specific product: {current_product['name']}")
                 # If we have a specific product, handle compatibility/requirements for it
                 prompt = f"""Given this product and user query about requirements/compatibility:
                 
@@ -164,6 +174,7 @@ Provide a detailed response about:
 
 Response should be clear and structured."""
             else:
+                self.logger.debug("Handling general requirements gathering")
                 # Otherwise, help gather requirements for product search
                 prompt = f"""Help gather product requirements from the user.
 
@@ -218,8 +229,11 @@ Format the response in a friendly, conversational way using markdown."""
 
     async def handle_purchase(self, state: Dict, search_func: Optional[Callable] = None) -> Dict:
         """Handle purchase intent"""
+        self.logger.info("=== Starting PURCHASE handler ===")
+        self.logger.debug(f"Initial state: {state}")
         products = state.get("scored_products", [])
         criteria = state.get("current_criteria", {})
+        self.logger.debug(f"Found {len(products)} products matching criteria: {criteria}")
 
         if not products:
             if not criteria:
@@ -267,6 +281,7 @@ Format as markdown. Only recommend from these products."""
                 "role": "assistant",
                 "content": response.content
             })
+            self.logger.debug("Generated purchase recommendations")
         except Exception as e:
             self.logger.exception("Error in purchase handler")
             state["messages"].append({
@@ -278,6 +293,8 @@ Format as markdown. Only recommend from these products."""
 
     async def handle_upgrade(self, state: Dict, search_func: Optional[Callable] = None) -> Dict:
         """Handle upgrade intent"""
+        self.logger.info("=== Starting UPGRADE handler ===")
+        self.logger.debug(f"Initial state: {state}")
         products = state.get("scored_products", [])
         criteria = state.get("current_criteria", {})
 
@@ -317,6 +334,7 @@ Format as markdown. Only recommend from these products."""
                 "role": "assistant",
                 "content": response.content
             })
+            self.logger.debug("Generated upgrade recommendations")
         except Exception as e:
             self.logger.exception("Error in upgrade handler")
             state["messages"].append({
@@ -330,11 +348,14 @@ Format as markdown. Only recommend from these products."""
 
     async def handle_first_use(self, state: Dict) -> Dict:
         """Handle first-time usage instructions for specific product or product category"""
-        self.logger.info("Starting first use handler")
+        self.logger.info("=== Starting FIRST_USE handler ===")
+        self.logger.debug(f"Initial state: {state}")
         try:
             products = state.get("scored_products", [])
             current_product = state.get("current_product")
             last_query = state.get("last_query", "")
+            
+            self.logger.debug(f"Products available: {len(products)}, Current product: {current_product and current_product['name']}")
             
             if current_product:
                 # Handle specific product first-use instructions
@@ -453,6 +474,8 @@ Make it objective and detailed."""
    
     async def handle_support(self, state: Dict) -> Dict:
         """Handle product support questions"""
+        self.logger.info("=== Starting SUPPORT handler ===")
+        self.logger.debug(f"Initial state: {state}")
         try:
             product = state["current_product"]
             query = state["last_query"]
@@ -476,6 +499,7 @@ Make it practical and easy to follow."""
                 "role": "assistant",
                 "content": response.content
             })
+            self.logger.debug("Generated support response")
             return state
 
         except Exception as e:
@@ -484,6 +508,8 @@ Make it practical and easy to follow."""
 
     async def handle_replacement(self, state: Dict, search_products_func) -> Dict:
         """Handle product replacement inquiries"""
+        self.logger.info("=== Starting REPLACEMENT handler ===")
+        self.logger.debug(f"Initial state: {state}")
         try:
             current_product = state["current_product"]
             search_context = state["search_context"]
@@ -521,6 +547,7 @@ Focus on making the transition smooth."""
                 "role": "assistant",
                 "content": response.content
             })
+            self.logger.debug("Generated replacement recommendations")
             return state
 
         except Exception as e:
@@ -530,9 +557,14 @@ Focus on making the transition smooth."""
 
     async def handle_warranty(self, state: Dict) -> Dict:
         """Handle warranty and return questions"""
+        self.logger.info("=== Starting WARRANTY handler ===")
+        self.logger.debug(f"Initial state: {state}")
         try:
-            product = state["current_product"]
-            query = state["last_query"]
+            product = state.get("current_product")
+            query = state.get("last_query")
+            
+            self.logger.debug(f"Handling warranty query: {query}")
+            self.logger.debug(f"Current product: {product}")
             
             prompt = f"""Address warranty and return questions for:
 
@@ -550,7 +582,9 @@ Cover:
 
 Be specific about terms and conditions."""
 
-            response = await self.llm.ainvoke([HumanMessage(content=prompt)])
+            response = await self.llm.invoke([HumanMessage(content=prompt)])
+            self.logger.debug("Generated warranty response")
+            
             state["messages"].append({
                 "role": "assistant",
                 "content": response.content
@@ -558,7 +592,11 @@ Be specific about terms and conditions."""
             return state
 
         except Exception as e:
-            self.logger.exception("Error handling warranty")
+            self.logger.exception("Error in WARRANTY handler")
+            state["messages"].append({
+                "role": "assistant",
+                "content": "I apologize, but I encountered an error processing your warranty question. Could you try asking in a different way?"
+            })
             return state
 
    

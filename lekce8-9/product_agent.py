@@ -124,6 +124,7 @@ class ProductAgent:
             
             # 2. Handle different intents using the resolver
             if intent == UserIntent.COMPARISON:
+                self.logger.debug("Routing to comparison handler")
                 if not state.get("scored_products"):
                     state["messages"].append({
                         "role": "assistant",
@@ -132,26 +133,34 @@ class ProductAgent:
                     return state
                 return await self.intent_resolver.handle_comparison(state, self.product_recommender.search_and_score_products)
             
+            elif intent == UserIntent.WARRANTY:
+                self.logger.debug("Routing to warranty handler")
+                return await self.intent_resolver.handle_warranty(state)
+            
             elif intent == UserIntent.REQUIREMENTS:
+                self.logger.debug("Routing to requirements handler")
                 return await self.intent_resolver.handle_requirements(state)
             
             elif intent == UserIntent.FIRST_USE:
+                self.logger.debug("Routing to first use handler")
                 return await self.intent_resolver.handle_first_use(state)
             
             elif intent == UserIntent.PURCHASE_REPLACEMENT:
+                self.logger.debug("Routing to replacement handler")
                 criteria = await self.product_recommender.analyze_query(state)
                 state["current_criteria"] = criteria
                 state = self.product_recommender.search_and_score_products(state)
                 return await self.intent_resolver.handle_replacement(state, self.product_recommender.search_and_score_products)
             
             elif intent == UserIntent.PURCHASE_UPGRADE:
+                self.logger.debug("Routing to upgrade handler")
                 criteria = await self.product_recommender.analyze_query(state)
                 state["current_criteria"] = criteria
                 state = self.product_recommender.search_and_score_products(state)
                 return await self.intent_resolver.handle_upgrade(state, self.product_recommender.search_and_score_products)
             
             elif intent == UserIntent.PURCHASE_NEW:
-                # Standard product search flow
+                self.logger.debug("Routing to purchase handler")
                 criteria = await self.product_recommender.analyze_query(state)
                 state["current_criteria"] = criteria
                 state = self.product_recommender.search_and_score_products(state)
