@@ -184,89 +184,48 @@ Example format:
             state["scored_products"] = []
             return state
 
-    def generate_recommendations(self, state: Dict) -> Dict:
+    async def generate_recommendations(self, state: Dict) -> Dict:
         """Generate product recommendations with explanations"""
         try:
             products = state.get("scored_products", [])
             if not products:
-                return state
+                return {
+                    "message": "I couldn't find any products matching your criteria. Could you try rephrasing your search?",
+                    "products": [],
+                    "criteria": state.get("current_criteria", {})
+                }
             
-            criteria = state.get("current_criteria", {})
+            # Deduplicate products by name
+            unique_products = {}
+            for p in products:
+                if p["name"] not in unique_products:
+                    unique_products[p["name"]] = p
             
-            # Convert products to ProductComparison models
-            comparisons = []
-            for p in products[:5]:
-                comparison = ProductComparison(
-                    name=p["name"],
-                    price=p["price"],
-                    category=p["category"],
-                    description=p["description"],
-                    dimensions=p.get("dimensions", {}),
-                    weight=p.get("weight"),
-                    score=p["score"],
-                    key_features=[],  # Will be filled by LLM
-                    pros=[],          # Will be filled by LLM
-                    cons=[]           # Will be filled by LLM
-                )
-                comparisons.append(comparison)
-            
-            # Create comparison prompt
-            prompt = f"""Compare these specific products:
-
-Products:
-{json.dumps([c.model_dump() for c in comparisons], indent=2)}
-
-User's Criteria:
-{json.dumps(criteria, indent=2)}
-
-Generate a comparison focusing on:
-1. Key features of each product
-2. Pros and cons
-3. Value for money
-4. Best matches for the criteria
-
-Return structured JSON matching ComparisonResponse schema."""
-
-            response = self.llm.invoke([HumanMessage(content=prompt)])
-            
-            # Parse response into ComparisonResponse
-            content = response.content
-            if "```" in content:
-                content = content.split("```")[1]
-                if content.startswith("json"):
-                    content = content[4:]
-                content = content.strip()
-            
-            comparison_response = ComparisonResponse.model_validate_json(content)
+            top_products = list(unique_products.values())[:5]
             
             # Format the response as markdown
-            markdown_response = f"""# Product Comparison
-
-{comparison_response.explanation}
-
-## Best Value
-{comparison_response.best_value}
-
-## Best Features
-{comparison_response.best_features}
-
-## Product Details
-"""
-            for product in comparison_response.products:
-                markdown_response += f"""
-### {product.name} (${product.price:.2f})
-- **Key Features**: {', '.join(product.key_features)}
-- **Pros**: {', '.join(product.pros)}
-- **Cons**: {', '.join(product.cons)}
-"""
+            markdown_response = "# Product Recommendations\n\n"
+            markdown_response += f"I found {len(top_products)} products matching your criteria:\n\n"
             
-            state["messages"].append({
-                "role": "assistant",
-                "content": markdown_response
-            })
+            for product in top_products:
+                markdown_response += f"## {product['name']}\n"
+                markdown_response += f"- Price: ${product['price']:.2f}\n"
+                if product.get('category'):
+                    markdown_response += f"- Category: {' > '.join(product['category'])}\n"
+                if product.get('description'):
+                    markdown_response += f"- Description: {product['description']}\n"
+                markdown_response += "\n"
             
-            return state
+            return {
+                "message": markdown_response,
+                "products": top_products,
+                "criteria": state.get("current_criteria", {})
+            }
             
         except Exception as e:
             self.logger.exception("Recommendation generation failed")
-            return state
+            return {
+                "message": "I encountered an error analyzing these products. Please try again.",
+                "products": products[:5] if products else [],
+                "criteria": state.get("current_criteria", {})
+            }

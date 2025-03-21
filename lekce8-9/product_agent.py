@@ -107,55 +107,54 @@ class ProductAgent:
             })
             return state
 
-    async def process_message(self, message: str, state: Dict) -> Dict:
+    async def process_message(self, message: str, state: dict) -> dict:
         try:
             self.logger.info(f"Processing message: {message}")
-            self.logger.debug(f"Initial state: {state}")
-
-            # Get intent
-            intent = await self.intent_classifier.classify_intent(message)
-            self.logger.info(f"Classified intent: {intent}")
-
-            # Update state with the message
-            state["last_query"] = message
-
-            # Process based on intent
-            if intent == UserIntent.PURCHASE_NEW:
-                self.logger.info("Processing PURCHASE_NEW intent")
-                # Analyze query for search criteria
-                criteria = await self.product_recommender.analyze_query(state)
-                state["current_criteria"] = criteria
-                
-                # Search and score products - FIXED: pass state instead of criteria
-                state = self.product_recommender.search_and_score_products(state)
-                
-                # Generate recommendations
-                state = await self.product_recommender.generate_recommendations(state)
-
-            elif intent == UserIntent.COMPARISON:
-                self.logger.info("Processing COMPARISON intent")
-                state = await self.intent_resolver.handle_comparison(state)
-
-            elif intent == UserIntent.FIRST_USE:
-                self.logger.info("Processing FIRST_USE intent")
-                state = await self.intent_resolver.handle_first_use(state)
-
-            elif intent == UserIntent.REQUIREMENTS:
-                self.logger.info("Processing REQUIREMENTS intent")
-                state = await self.intent_resolver.handle_requirements(state)
-
-            else:
-                self.logger.warning(f"Unhandled intent: {intent}")
+            
+            # Add message to state
+            if "messages" not in state:
+                state["messages"] = []
+            state["messages"].append({"role": "user", "content": message})
+            
+            # Analyze query and update criteria
+            criteria = await self.product_recommender.analyze_query(state)
+            state["current_criteria"] = criteria
+            
+            # Search and score products - THIS IS THE IMPORTANT PART
+            state = self.product_recommender.search_and_score_products(state)
+            products = state.get("scored_products", [])
+            
+            self.logger.info(f"Found {len(products)} products")
+            
+            if not products:
                 state["messages"].append({
                     "role": "assistant",
-                    "content": "I'm not sure how to help with that. Could you rephrase your request?"
+                    "content": "I couldn't find any products matching your criteria. Could you try being more general?"
                 })
-
-            self.logger.debug(f"Final state after processing: {state}")
+                return state
+            
+            # Generate response with found products
+            markdown_response = "# Product Recommendations\n\n"
+            markdown_response += f"I found {len(products)} products matching your criteria:\n\n"
+            
+            for product in products[:5]:
+                markdown_response += f"## {product['name']}\n"
+                markdown_response += f"- Price: ${product['price']:.2f}\n"
+                if product.get('category'):
+                    markdown_response += f"- Category: {' > '.join(product['category'])}\n"
+                if product.get('description'):
+                    markdown_response += f"- Description: {product['description']}\n"
+                markdown_response += "\n"
+            
+            state["messages"].append({
+                "role": "assistant",
+                "content": markdown_response
+            })
+            
             return state
-
+            
         except Exception as e:
-            self.logger.exception("Error in process_message")
+            self.logger.exception("Error processing message")
             state["messages"].append({
                 "role": "assistant",
                 "content": "I encountered an error processing your request. Please try again."
