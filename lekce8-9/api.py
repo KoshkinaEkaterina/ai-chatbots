@@ -103,70 +103,43 @@ async def chat(request: ChatMessage) -> ChatResponse:
         logger.info("=== NEW CHAT REQUEST ===")
         logger.info(f"Incoming request: {request.dict()}")
 
-        if not request.message:
-            logger.warning("Empty message received")
-            raise HTTPException(
-                status_code=400,
-                detail="Message cannot be empty"
-            )
-
-        # Get or create conversation state
         conversation_id = request.conversation_id or str(uuid.uuid4())
         logger.info(f"Using conversation ID: {conversation_id}")
         
         state = chat_state.get_or_create_conversation(conversation_id)
-        logger.debug(f"Current state before processing: {state}")
+        state["last_query"] = request.message
         
-        # Add user message to state
-        state["messages"].append({
-            "role": "user",
-            "content": request.message
-        })
-        logger.debug("Added user message to state")
-        
-        # Process the message and get updated state
         try:
-            logger.info("Processing message with product agent...")
+            # Process the message
             state = await product_agent.process_message(request.message, state)
-            logger.debug(f"State after processing: {state}")
+            
+            # Get the products directly from state
+            products = state.get("scored_products", [])
+            logger.info(f"Found {len(products)} products")
+            
+            # Get the last assistant message
+            messages = state.get("messages", [])
+            last_message = next((msg["content"] for msg in reversed(messages) 
+                               if msg["role"] == "assistant"), "No response generated")
+            
+            response = ChatResponse(
+                message=last_message,
+                conversation_id=conversation_id,
+                products=products[:5],  # Take top 5 products
+                criteria=state.get("current_criteria", {})
+            )
+            
+            logger.info("=== SENDING RESPONSE ===")
+            logger.debug(f"Response object: {response.dict()}")
+            
+            return response
+            
         except Exception as e:
             logger.exception("Error in product agent processing")
-            state["messages"].append({
-                "role": "assistant",
-                "content": "I apologize, but I encountered an error processing your request."
-            })
-        
-        # Get the latest assistant message
-        latest_message = ""
-        for msg in reversed(state["messages"]):
-            if msg["role"] == "assistant":
-                latest_message = msg["content"]
-                break
-        
-        logger.debug(f"Latest assistant message: {latest_message[:200]}...")
-        
-        if not latest_message:
-            logger.warning("No assistant message found in state")
-            latest_message = "I apologize, but I couldn't generate a response."
-        
-        # Include products in response if they exist
-        products = state.get("scored_products", [])
-        criteria = state.get("current_criteria", {})
-        
-        logger.info(f"Found {len(products)} products in state")
-        logger.debug(f"Current criteria: {criteria}")
-        
-        response = ChatResponse(
-            message=latest_message,
-            conversation_id=conversation_id,
-            products=products,
-            criteria=criteria
-        )
-        
-        logger.info("=== SENDING RESPONSE ===")
-        logger.debug(f"Response object: {response.dict()}")
-        
-        return response
+            raise HTTPException(
+                status_code=500,
+                detail=str(e)
+            )
         
     except Exception as e:
         logger.exception("!!! CRITICAL ERROR IN CHAT ENDPOINT !!!")
