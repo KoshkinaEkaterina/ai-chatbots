@@ -16,7 +16,6 @@ import matplotlib.pyplot as plt
 from fpdf import FPDF
 from PIL import Image
 
-
 # Initialize environment and Pinecone
 env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(env_path)
@@ -116,8 +115,8 @@ chain = ConversationalRetrievalChain.from_llm(
 )
 
 # Confidence threshold values
-HIGH_CONFIDENCE = 0.8
-LOW_CONFIDENCE = 0.5
+HIGH_CONFIDENCE = 0.85
+LOW_CONFIDENCE = 0.55
 
 
 def calculate_confidence(scores: List[float]) -> float:
@@ -197,14 +196,32 @@ def agent(state: ChatState) -> ChatState:
             unique_sources = list(set(sources_used))  # Remove duplicates
 
             final_response = (
-                f"📌 Most relevant information: \n{relevant_context}\n"
+                f"📌 Most relevant information (confidence: {confidence:.2f}):\n{relevant_context}\n"
                 f"🔗 Sources used: {', '.join(unique_sources)}\n"
                 f"📊 Would you like to see a graph? Type 'graph' or 'visualization'."
             )
 
     elif response_type == "cautious":
-        final_response = "🔍 I found some relevant information, but some details might be missing. " \
-                         "Would you like more sources?"
+##        final_response = "🔍 I found some relevant information, but some details might be missing. " \
+##                         "Would you like more sources?"
+        fallback_prompt = PromptTemplate.from_template("""
+        You are a helpful assistant who answers questions about luxury handbag investments, even if there's no direct source material.
+        Use your general knowledge and prior conversation to respond clearly and kindly.
+        Conversation so far:
+        {chat_history}
+        User question:
+        {question}
+        """)
+        fallback_chain = fallback_prompt | ChatOpenAI(model="gpt-4", temperature=0.7)
+        response = fallback_chain.invoke({
+            "chat_history": "\n".join([f"User: {m['human']}\nAI: {m['ai']}" for m in chat_history]),
+            "question": current_message
+        })
+        final_response = (
+            f"{response.content}\n\n"
+            "📌 *Note: This answer was generated based on general knowledge (confidence: {confidence:.2f}). "
+            "It was not directly supported by specific documents from the archive.*"
+        )
 
     else:
         final_response = "🤔 I couldn't find sufficiently precise information. Could you clarify your question?"
@@ -213,7 +230,8 @@ def agent(state: ChatState) -> ChatState:
         "messages": list(messages) + [AIMessage(content=final_response)],
         "context": {
             "last_documents": scored_docs[:3], 
-            "chat_history": chat_history + [{"human": current_message, "ai": final_response}]
+            "chat_history": chat_history + [{"human": current_message, "ai": final_response}],
+            "confidence": confidence
         }
     }
 
